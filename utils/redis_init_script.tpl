@@ -1,3 +1,6 @@
+EXIT_WARNING=1
+EXIT_CRITICAL=2
+EXIT_OKAY=0
 
 case "$1" in
     start)
@@ -13,6 +16,7 @@ case "$1" in
         if [ ! -f $PIDFILE ]
         then
                 echo "$PIDFILE does not exist, process is not running"
+                exit $EXIT_WARNING
         else
                 PID=$(cat $PIDFILE)
                 echo "Stopping ..."
@@ -25,7 +29,25 @@ case "$1" in
                 echo "Redis stopped"
         fi
         ;;
+    status)
+        if [ -f $PIDFILE ]
+        then
+                PID=$(cat $PIDFILE)
+
+                if [ -x /proc/${PID} ]
+                then
+                    echo "Redis server is running on $REDISPORT using the config file $CONF with PID $PID"
+                    exit $EXIT_OKAY
+                else
+                    echo "$PIDFILE exists but the Redis process has crashed."
+                    exit $EXIT_CRITICAL
+                fi
+        else
+                echo "Redis server is stopped."
+                exit $EXIT_WARNING
+        fi
+        ;;
     *)
-        echo "Please use start or stop as first argument"
+        echo "Please use start, stop or status as first argument"
         ;;
 esac
